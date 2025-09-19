@@ -1,5 +1,5 @@
 #Streamlit UI
-
+import os
 import streamlit as st
 # Import the search function from your backend logic.
 from core import search
@@ -41,8 +41,16 @@ if query:
     if results:
         # Loop through the results and display each one.
         for result in results:
+            file_url = f"file://{os.path.abspath(result['path'])}"
             st.subheader(f"📄 {result['filename']}")
             st.write(f"**Relevance Score:** {result['score']:.4f}")
+            with open(result['path'], "rb") as f: # user needs the path to get the file
+                st.download_button(
+                    label=f"⬇️ Download {result['filename']}",
+                    data=f,
+                    file_name=result['filename'],
+                    mime='application/pdf'
+                )
             # Add a divider for better readability between results.
             st.divider()
     else:

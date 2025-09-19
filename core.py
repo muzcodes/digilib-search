@@ -102,7 +102,8 @@ def search(query, top_n=10):
         if similarity_scores[index] > 0:
             result = {
                 "filename": documents[index]["filename"],
-                "score": similarity_scores[index]
+                "score": similarity_scores[index],
+                "path": os.path.join(DATA_PATH, documents[index]["filename"]) # user needs the path to get the file
             }
             results.append(result)
 
