@@ -46,7 +46,7 @@ if query:
             st.write(f"**Relevance Score:** {result['score']:.4f}")
             with open(result['path'], "rb") as f: # user needs the path to get the file
                 st.download_button(
-                    label=f"⬇️ Download {result['filename']}",
+                    label=f"⬇️ Download",
                     data=f,
                     file_name=result['filename'],
                     mime='application/pdf'
