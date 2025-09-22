@@ -4,10 +4,14 @@ import pickle
 import pdfplumber
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import logging
 
 
 DATA_PATH = "data/"
 INDEX_PATH = "saved_index/"
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Ensure the index directory exists.
 os.makedirs(INDEX_PATH, exist_ok=True)
@@ -20,7 +24,7 @@ DOCUMENTS_PATH = os.path.join(INDEX_PATH, "documents.pkl")
 
 def parse_pdfs(data_path):
     
-    print("🚀 Starting PDF parsing...")
+    logging.info("🚀 Starting PDF parsing...")
     documents = []
     for filename in os.listdir(data_path):
         if filename.endswith(".pdf"):
@@ -35,17 +39,17 @@ def parse_pdfs(data_path):
                             full_text += page_text + "\n"
 
                     documents.append({"filename": filename, "text": full_text})
-                    print(f"  ✅ Parsed: {filename}")
+                    logging.info(f"  ✅ Parsed: {filename}")
             except Exception as e:
-                print(f"  ❌ Error parsing {filename}: {e}")
+                logging.error(f"  ❌ Error parsing {filename}: {e}")
 
-    print(f"\n📚 Found and parsed {len(documents)} documents.")
+    logging.info(f"\n📚 Found and parsed {len(documents)} documents.")
     return documents
 
 
 def build_and_save_index(documents):
     
-    print("\n🛠️ Building TF-IDF index...")
+    logging.info("\n🛠️ Building TF-IDF index...")
 
     # Extract the text content from the documents
     texts = [doc["text"] for doc in documents]
@@ -53,7 +57,11 @@ def build_and_save_index(documents):
     # Initialize the TF-IDF Vectorizer.
     # stop_words='english' removes common English words.
     # ngram_range can capture multi-word phrases, improving search quality.
-    vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 2))
+    vectorizer = TfidfVectorizer(
+        stop_words='english',
+        ngram_range=(1, 2),
+        max_features=5000  # Limit vocabulary size to 5000 terms
+    )
 
     # Create the TF-IDF matrix by fitting and transforming the text data.
     tfidf_matrix = vectorizer.fit_transform(texts)
@@ -66,14 +74,14 @@ def build_and_save_index(documents):
     with open(DOCUMENTS_PATH, "wb") as f:
         pickle.dump(documents, f)
 
-    print("💾 Index built and saved successfully to the 'saved_index' folder.")
+    logging.info("💾 Index built and saved successfully to the 'saved_index' folder.")
 
 
 def search(query, top_n=10):
     
     # Check if the index files exist before trying to load them.
     if not all([os.path.exists(p) for p in [VECTORIZER_PATH, MATRIX_PATH, DOCUMENTS_PATH]]):
-        print("❌ Index not found. Please run the script first to build the index.")
+        logging.error("❌ Index not found. Please run the script to build the index.")
         return []
 
     # Load the saved vectorizer, matrix, and documents.
@@ -107,11 +115,14 @@ def search(query, top_n=10):
             }
             results.append(result)
 
+    # Sort results by score (descending) and filename (ascending)
+    results = sorted(results, key=lambda x: (-x['score'], x['filename']))
+
     return results
 
 
 if __name__ == "__main__":
-    print("--- Starting Backend Engine Setup ---")
+    logging.info("--- Starting Backend Engine Setup ---")
 
     # Step 1: Parse all PDFs in the data directory.
     docs = parse_pdfs(DATA_PATH)
@@ -120,7 +131,7 @@ if __name__ == "__main__":
     if docs:
         build_and_save_index(docs)
     else:
-        print("\n⚠️ No documents found in the 'data' folder. The index was not built.")
+        logging.warning("\n⚠️ No documents found in the 'data' folder. The index was not built.")
 
-    print("\n--- Backend Engine Setup Complete ---")
-    print("You can now run the Streamlit app using: streamlit run app.py")
+    logging.info("\n--- Backend Engine Setup Complete ---")
+    logging.info("You can now run the Streamlit app using: streamlit run app.py")

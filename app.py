@@ -28,31 +28,35 @@ query = st.text_input(
 
 # --- Search Execution and Results Display ---
 # Only run the search if the user has entered a query.
-if query:
-    # Use a spinner to show that the search is in progress.
+if query.strip():  # Ensure the query is not empty or just whitespace
     with st.spinner('Searching through the library...'):
-        # Call the search function from your core_logic.
         results = search(query)
-
-    # Display the number of results found.
     st.success(f"Found {len(results)} relevant documents.")
-    
-    # Check if any results were returned.
-    if results:
-        # Loop through the results and display each one.
-        for result in results:
-            file_url = f"file://{os.path.abspath(result['path'])}"
-            st.subheader(f"📄 {result['filename']}")
-            st.write(f"**Relevance Score:** {result['score']:.4f}")
-            with open(result['path'], "rb") as f: # user needs the path to get the file
-                st.download_button(
-                    label=f"⬇️ Download",
-                    data=f,
-                    file_name=result['filename'],
-                    mime='application/pdf'
-                )
-            # Add a divider for better readability between results.
-            st.divider()
-    else:
-        # If no results are found, display a warning message.
-        st.warning("No documents found matching your query. Please try different keywords.")
+else:
+    st.warning("Please enter a valid search query.")
+
+# Check if any results were returned.
+if results:
+    for result in results:
+        file_url = f"file://{os.path.abspath(result['path'])}"
+        st.subheader(f"📄 {result['filename']}")
+        st.write(f"**Relevance Score:** {result['score']:.4f}")
+        
+        try:
+            with open(result['path'], "rb") as f:
+                file_data = f.read()
+            st.download_button(
+                label="⬇️ Download",
+                data=file_data,
+                file_name=result['filename'],
+                mime='application/pdf'
+            )
+        except FileNotFoundError:
+            st.error(f"⚠️ File not found: {result['filename']}")
+        except Exception as e:
+            st.error(f"⚠️ An error occurred while accessing {result['filename']}: {e}")
+        
+        st.divider()
+else:
+    # If no results are found, display a warning message.
+    st.warning("No documents found matching your query. Please try different keywords.")
