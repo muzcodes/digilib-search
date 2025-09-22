@@ -26,6 +26,9 @@ query = st.text_input(
     help="Enter keywords related to the articles you want to find."
 )
 
+# Initialize results to an empty list
+results = []
+
 # --- Search Execution and Results Display ---
 # Only run the search if the user has entered a query.
 if query.strip():  # Ensure the query is not empty or just whitespace
@@ -33,7 +36,9 @@ if query.strip():  # Ensure the query is not empty or just whitespace
         results = search(query)
     st.success(f"Found {len(results)} relevant documents.")
 else:
-    st.warning("Please enter a valid search query.")
+    # Only show the warning if the user has interacted with the search bar
+    if query != "":
+        st.warning("Please enter a valid search query.")
 
 # Check if any results were returned.
 if results:
@@ -58,5 +63,6 @@ if results:
         
         st.divider()
 else:
-    # If no results are found, display a warning message.
-    st.warning("No documents found matching your query. Please try different keywords.")
+    # Only show the warning if the user has interacted with the search bar
+    if query.strip():
+        st.warning("No documents found matching your query. Please try different keywords.")
